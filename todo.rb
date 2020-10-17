@@ -28,9 +28,6 @@ helpers do
   end
 
   def sort_lists(lists)
-    incomplete_lists = {}
-    complete_lists = {}
-
     complete_lists, incomplete_lists = lists.partition { |list| list_complete?(list) }
 
     incomplete_lists.each { |list| yield list, lists.index(list) }
@@ -38,9 +35,6 @@ helpers do
   end
 
   def sort_todos(todos)
-    incomplete_todos = {}
-    complete_todos = {}
-
     complete_todos, incomplete_todos = todos.partition { |todo| todo[:completed] }
 
     incomplete_todos.each { |todo| yield todo, todos.index(todo) }
@@ -77,7 +71,7 @@ def error_for_list_name(name)
 end
 
 def error_for_todo(name)
-  return unless !(1..100).cover?(name.size)
+  return if (1..100).cover?(name.size)
 
   'The todo name must be between 1 and 100 characters.'
 end
