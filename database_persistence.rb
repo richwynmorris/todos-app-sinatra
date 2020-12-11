@@ -18,8 +18,6 @@ class DatabasePersistence
 
     tuple = result.first
     {id: tuple["id"], name: tuple["name"], todos: []}
-
-    # @session[:lists].find { |list| list[:id] == id }
   end
 
   def all_lists
@@ -30,6 +28,12 @@ class DatabasePersistence
       {id: tuple["id"], name: tuple["name"], todos: []}
     end
     # @session[:lists]
+    #   sql = "SELECT lists.id, lists.name, todo.name, todo.completed FROM lists INNER JOIN todo ON lists.id = todo.list_id;"
+    # result = query(sql)
+
+    # result.map do |tuple|
+    #   {id: tuple["lists.id"], name: tuple["lists.name"], todos: [name: tuple["todo.name"], completed: tuple["todo.completed"]]}
+    # end
   end
 
   def create_new_list(list_name)
