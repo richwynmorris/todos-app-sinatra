@@ -17,7 +17,9 @@ class DatabasePersistence
     result = query(sql, id)
 
     tuple = result.first
-    {id: tuple["id"], name: tuple["name"], todos: []}
+    todos = find_todos_for_list(tuple["id"])
+
+    {id: tuple["id"], name: tuple["name"], todos: todos}
   end
 
   def all_lists
@@ -25,15 +27,9 @@ class DatabasePersistence
     result = query(sql)
 
     result.map do |tuple|
-      {id: tuple["id"], name: tuple["name"], todos: []}
+      todos = find_todos_for_list(tuple["id"])
+      {id: tuple["id"].to_i, name: tuple["name"], todos: todos}
     end
-    # @session[:lists]
-    #   sql = "SELECT lists.id, lists.name, todo.name, todo.completed FROM lists INNER JOIN todo ON lists.id = todo.list_id;"
-    # result = query(sql)
-
-    # result.map do |tuple|
-    #   {id: tuple["lists.id"], name: tuple["lists.name"], todos: [name: tuple["todo.name"], completed: tuple["todo.completed"]]}
-    # end
   end
 
   def create_new_list(list_name)
@@ -73,5 +69,16 @@ class DatabasePersistence
     # list[:todos].each do |todo|
     #   todo[:completed] = true
     # end
+  end
+
+  private
+
+  def find_todos_for_list(tuple_id)
+    todo_sql = "SELECT * FROM todo WHERE list_id = $1"
+    todo_result = query(todo_sql, tuple_id)
+
+    todo_result.map do |todo_tuple|
+      {id: todo_tuple["id"].to_i, name: todo_tuple["name"], completed: todo_tuple["completed"] == 't'}
+    end
   end
 end 
