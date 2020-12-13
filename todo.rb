@@ -53,6 +53,10 @@ before do
   @storage = DatabasePersistence.new(logger)
 end
 
+after do
+  @storage.disconnect  
+end
+
 # Return an error message if the name is invalid. Return nil if name is valid.
 def error_for_list_name(list_name)
   if !(1..100).cover?(list_name.size)
