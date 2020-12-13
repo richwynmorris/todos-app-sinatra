@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'sinatra'
-require 'sinatra/reloader' if development?
 require 'sinatra/content_for'
 require 'tilt/erubis'
 
@@ -11,6 +10,11 @@ configure do
   enable :sessions
   set :session_secret, 'secret'
   set :erb, :escape_html => true
+end
+
+configure(:development) do
+  require 'sinatra/reloader'
+  also_reload "database_persistence.rb"
 end
 
 helpers do
@@ -50,18 +54,20 @@ before do
 end
 
 # Return an error message if the name is invalid. Return nil if name is valid.
-def error_for_list_name(name)
-  if !(1..100).cover?(name.size)
+def error_for_list_name(list_name)
+  if !(1..100).cover?(list_name.size)
     'The list name must be between 1 and 100 characters.'
-  elsif @storage.all_lists.any? { |list| list[:name] == name }
+  elsif @storage.all_lists.any? { |list| list[:name] == list_name }
     'List name must be unique.'
   end
 end
 
-def error_for_todo(name)
-  return if (1..100).cover?(name.size)
-
-  'The todo name must be between 1 and 100 characters.'
+def error_for_todo(list_id, todo_name)
+  if !(1..100).cover?(todo_name.size)
+    'The todo name must be between 1 and 100 characters.'
+  elsif @storage.find_todos_for_list(list_id).any? { |todo| todo[:name] == todo_name }
+    'Todo name must be unique.'
+  end
 end
 
 # Check if list is valid and either return valid list or redirect
@@ -163,13 +169,13 @@ post '/lists/:list_id/todos' do
   @list_id = params[:list_id].to_i
   @list = load_list(@list_id)
   text = params[:todo].strip
-  error = error_for_todo(text)
+  error = error_for_todo(@list_id, text)
 
   if error
     session[:error] = error
     erb :list, layout: :layout
   else
-    @storage.add_to_list(@list_id, text)
+    @storage.create_new_todo(@list_id, text)
     session[:success] = 'The todo has been added.'
     redirect "/lists/#{@list_id}"
   end
@@ -211,7 +217,7 @@ post '/lists/:list_id/check_all' do
   @list_id = params[:list_id].to_i
   @list = load_list(@list_id)
 
-  @storage.mark_all_todos_complete(list_id)
+  @storage.mark_all_todos_complete(@list_id)
 
   session[:success] = 'All todos have been updated.'
   redirect "/lists/#{@list_id}"
